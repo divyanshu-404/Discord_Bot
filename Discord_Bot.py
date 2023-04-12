@@ -10,24 +10,21 @@ from dotenv import load_dotenv
 import random
 import string
 
-# Replace with your own bot token and GPT-3 API key
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Create the Discord bot object with the command prefix "!"
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/',intents=intents)
 
-# Keep track of voice clients for each server
+
 voice_clients = {}
 
-# Command to list all Commands
 @bot.command(name='list_all')
 async def all_commands(ctx):
     await ctx.send('/hopin - to join the voice channel user is in currently\n/hopout - to leave the current voice channel\n/play - to play music with given url\n/pause - to pause music\n/resume - to resume music\n/set - to set reminder for gievn date and time\n/show - to list all set reminder\n/rem - to remove a reminder given it\'s index\n/mod - to modify a given reminder at an index to given date and time\n/talk - to talk to me')
 
-# Command to join the voice channel the user is in
+
 @bot.command(name="hopin")
 async def join_voice_channel(ctx):
     if not ctx.message.author.voice:
@@ -39,13 +36,12 @@ async def join_voice_channel(ctx):
     else:
         voice_clients[ctx.guild] = await channel.connect()
 
-# Command to leave the voice channel
 @bot.command(name="hopout")
 async def leave_voice_channel(ctx):
     if ctx.guild.voice_client is not None:
         await ctx.guild.voice_client.disconnect()
 
-# Command to play music from a URL
+
 class MusicPlayer:
     def __init__(self, voice_client):
         self.voice_client = voice_client
@@ -161,10 +157,10 @@ async def resume(ctx):
         bot.player.voice_client.resume()
         await ctx.send('Player resumed.')
 
-# List to hold reminders
+
 reminders = []
 
-# Function to parse message for datetime
+
 def parse_message_for_datetime(message):
     try:
         datetime_str = message.split(' ')[0:2]
@@ -173,42 +169,41 @@ def parse_message_for_datetime(message):
     except ValueError:
         return None
 
-# Function to create a reminder
+
 def create_reminder(author_id, datetime):
     reminders.append({'author_id': author_id, 'datetime': datetime})
 
-# Function to delete a reminder
+
 def delete_reminder(index):
     reminders.pop(index)
 
-# Function to modify a reminder
 def modify_reminder(index, datetime):
     reminders[index]['datetime'] = datetime
 
-user_timezone = timezone('Asia/Kolkata')  # Replace with the user's timezone
+user_timezone = timezone('Asia/Kolkata') 
 
 @bot.command(name='set')
 async def remind(ctx, *, message):
-    # Get the datetime object from the message
+
     reminder_datetime = parse_message_for_datetime(message)
     if not reminder_datetime:
         await ctx.send("Please enter a valid datetime in the format 'YYYY-MM-DD HH:MM:SS'")
         return
 
-    # Convert the datetime to the user's timezone
+
     reminder_datetime = reminder_datetime.astimezone(user_timezone)
     
     if datetime.now(timezone('Asia/Kolkata')) >= reminder_datetime:
         await ctx.send("Entered time is in the Past, reminder not set")
     else:
-        # Create the reminder
+      
         create_reminder(ctx.author.id, reminder_datetime)
 
-        # Confirm the reminder was set
+     
         formatted_datetime = reminder_datetime.strftime('%Y-%m-%d %H:%M:%S %Z')
         await ctx.send(f"Reminder set for {formatted_datetime}")
 
-# Command to show all reminders
+
 @bot.command(name='show')
 async def show_reminders(ctx):
     reminder_str = "Reminders:\n"
@@ -216,7 +211,7 @@ async def show_reminders(ctx):
         reminder_str += f"{i+1}. {reminder['datetime']} \n"
     await ctx.send(reminder_str)
 
-# Command to delete a reminder
+
 @bot.command(name='rem')
 async def delete(ctx, index: int):
     try:
@@ -225,7 +220,7 @@ async def delete(ctx, index: int):
     except IndexError:
         await ctx.send(f"Reminder {index} not found")
 
-# Command to modify a reminder
+
 @bot.command(name='mod')
 async def modify(ctx, index: int, datetime_str1: str, datetime_str2: str):
     try:
@@ -247,9 +242,9 @@ async def check_reminders():
                 author = await bot.fetch_user(reminder['author_id'])
                 await author.send('Reminder: Your Event is Happening')
                 delete_reminder(i)
-        await asyncio.sleep(1)  # check every 1 seconds
+        await asyncio.sleep(1) 
 
-# Define your GPT-3 model
+
 model_engine = "text-davinci-003"
 
 @bot.command(name='talk')
@@ -257,10 +252,10 @@ async def on_message(ctx):
     if ctx.author == bot.user:
         return
 
-    # Get the user input
+   
     user_input = ctx.message.content.split("/talk ")[1]
 
-    # Call the OpenAI API to generate a response
+   
     response = openai.Completion.create(
         engine=model_engine,
         prompt=user_input,
@@ -270,10 +265,10 @@ async def on_message(ctx):
         temperature=0.7,
     )
 
-    # Send the response back to the user
+ 
     await ctx.send(response.choices[0].text)
 
-# Event listener for when the bot is ready
+
 @bot.event
 async def on_ready():
     """print(f"Logged in as {bot.user}")
@@ -284,7 +279,6 @@ async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     bot.loop.create_task(check_reminders())
 
-# Run the bot with your Discord bot token
+
 bot.run(TOKEN) 
 
-#0259bb253341d32829c57b52b211b9c3
